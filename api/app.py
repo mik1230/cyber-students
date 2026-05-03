@@ -13,6 +13,10 @@ from .handlers.user import UserHandler
 class Application(Application):
 
     def __init__(self):
+        self.db = MotorClient(**MONGODB_HOST)[MONGODB_DBNAME]
+
+        self.executor = ThreadPoolExecutor(WORKERS)
+
         handlers = [
             (r'/students/?', WelcomeHandler),
             (r'/students/api/?', WelcomeHandler),
@@ -21,11 +25,13 @@ class Application(Application):
             (r'/students/api/logout', LogoutHandler),
             (r'/students/api/user', UserHandler)
         ]
-
-        settings = dict()
+        # The settings dictionary is passed to the Application constructor and can be accessed within handlers via          self.settings.get('db') for the database connection and self.settings.get('executor') for the thread pool executor. This allows handlers to easily access shared resources like the database and executor without needing to manage their own connections or thread pools, promoting code reuse and separation of concerns within the application.
+        settings = {
+            "db": self.db,  
+            "executor": self.executor,
+            "debug": True
+        }
 
         super(Application, self).__init__(handlers, **settings)
 
-        self.db = MotorClient(**MONGODB_HOST)[MONGODB_DBNAME]
-
-        self.executor = ThreadPoolExecutor(WORKERS)
+        

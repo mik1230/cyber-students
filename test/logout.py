@@ -1,70 +1,70 @@
 from json import dumps
 from tornado.escape import json_decode
 from tornado.httputil import HTTPHeaders
-from tornado.ioloop import IOLoop
 from tornado.web import Application
-
-from api.handlers.logout import LogoutHandler
-
 from .base import BaseTest
+
+# Import the handlers needed for the full flow
+from api.handlers.registration import RegistrationHandler
+from api.handlers.login import LoginHandler
+from api.handlers.logout import LogoutHandler
 
 class LogoutHandlerTest(BaseTest):
 
     @classmethod
-    def setUpClass(self):
-        self.my_app = Application([(r'/logout', LogoutHandler)])
+    def setUpClass(cls):
+        # Ensure the routes match exactly what is in your api/app.py
+        cls.my_app = Application([
+            (r'/students/api/registration', RegistrationHandler),
+            (r'/students/api/login', LoginHandler),
+            (r'/students/api/logout', LogoutHandler)
+        ])
         super().setUpClass()
 
-    async def register(self):
-        await self.get_app().db.users.insert_one({
-            'email': self.email,
-            'password': self.password,
-            'displayName': 'testDisplayName'
-        })
-
-    async def login(self):
-        await self.get_app().db.users.update_one({
-            'email': self.email
-        }, {
-            '$set': { 'token': self.token, 'expiresIn': 2147483647 }
-        })
-
-    def setUp(self):
-        super().setUp()
-
-        self.email = 'test@test.com'
-        self.password = 'testPassword'
-        self.token = 'testToken'
-
-        IOLoop.current().run_sync(self.register)
-        IOLoop.current().run_sync(self.login)
-
     def test_logout(self):
-        headers = HTTPHeaders({'X-Token': self.token})
-        body = {}
+        """Full flow: Register, Login, then Logout"""
+        email = 'logout_test@test.com'
+        password = 'password123'
+        
+        # 1. Register the user
+        reg_body = {'email': email, 'password': password, 'displayName': 'LogoutUser'}
+        self.fetch('/students/api/registration', method='POST', body=dumps(reg_body))
 
-        response = self.fetch('/logout', headers=headers, method='POST', body=dumps(body))
+        # 2. Login to get the encrypted token
+        login_resp = self.fetch('/students/api/login', method='POST', body=dumps({'email': email, 'password': password}))
+        token = json_decode(login_resp.body)['token']
+
+        # 3. Logout using that token
+        headers = HTTPHeaders({'X-Token': token})
+        response = self.fetch('/students/api/logout', method='POST', headers=headers, body="")
         self.assertEqual(200, response.code)
 
     def test_logout_without_token(self):
-        body = {}
-
-        response = self.fetch('/logout', method='POST', body=dumps(body))
+        # Should return 400 as per your AuthHandler logic
+        response = self.fetch('/students/api/logout', method='POST', body="")
         self.assertEqual(400, response.code)
 
     def test_logout_wrong_token(self):
-        headers = HTTPHeaders({'X-Token': 'wrongToken'})
-        body = {}
-
-        response = self.fetch('/logout', method='POST', body=dumps(body))
-        self.assertEqual(400, response.code)
+        # Should return 403 as per your AuthHandler logic
+        headers = HTTPHeaders({'X-Token': 'this_token_does_not_exist'})
+        response = self.fetch('/students/api/logout', method='POST', headers=headers, body="")
+        self.assertEqual(403, response.code)
 
     def test_logout_twice(self):
-        headers = HTTPHeaders({'X-Token': self.token})
-        body = {}
+        """Verify a token can't be used twice"""
+        email = 'logout_twice@test.com'
+        password = 'password123'
+        
+        # Setup: Register and Login
+        self.fetch('/students/api/registration', method='POST', body=dumps({'email': email, 'password': password, 'displayName': 'Twice'}))
+        login_resp = self.fetch('/students/api/login', method='POST', body=dumps({'email': email, 'password': password}))
+        token = json_decode(login_resp.body)['token']
+        headers = HTTPHeaders({'X-Token': token})
 
-        response = self.fetch('/logout', headers=headers, method='POST', body=dumps(body))
-        self.assertEqual(200, response.code)
+        # First logout (Should succeed)
+        resp1 = self.fetch('/students/api/logout', method='POST', headers=headers, body="")
+        self.assertEqual(200, resp1.code)
 
-        response_2 = self.fetch('/logout', headers=headers, method='POST', body=dumps(body))
-        self.assertEqual(403, response_2.code)
+        # Second logout (Should fail 403 because token is now cleared in DB)
+        resp2 = self.fetch('/students/api/logout', method='POST', headers=headers, body="")
+        self.assertEqual(403, resp2.code)
