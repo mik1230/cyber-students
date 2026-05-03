@@ -52,7 +52,6 @@ def decrypt_pii(combined_hex: str) -> str:
 # Chosen over SHA-256 for resistance against ASIC/GPU cracking.
 # i have generated a random salt for each password and stored it alongside the hash. I have used os.urandom to generate a secure random salt, and I have concatenated the salt with the hash before storing it in the database. This way, when verifying a password, I can extract the salt from the stored value and use it to hash the input password for comparison. This approach ensures that even if two users have the same password, their stored hashes will be different due to the unique salts, providing better security against rainbow table attacks.
 def hash_password(password: str) -> str:
-    """Uses Scrypt KDF to protect against GPU/ASIC cracking."""
     salt = os.urandom(16)
     # n=cost, r=block_size, p=parallelization
     key = hashlib.scrypt(
@@ -65,7 +64,6 @@ def hash_password(password: str) -> str:
 # It extracts the salt from the stored hash, re-computes the hash with the input password, and compares them securely.
 # It runs the Scrypt KDF with the same parameters to ensure that the hashing process is consistent and secure against brute-force attacks. Same memory, block size, and parallelization settings must be used to prevent attackers from optimizing their cracking attempts.
 def verify_password(password: str, stored_hex: str) -> bool:
-    """Re-hashes input and compares against stored Scrypt salt+hash."""
     if not stored_hex: return False
     data = bytes.fromhex(stored_hex)
     salt = data[:16]
@@ -76,10 +74,9 @@ def verify_password(password: str, stored_hex: str) -> bool:
     return new_hash == original_hash
 
 
-# Blind Indexing: Creates a SHA-256 hash of the normalized email for O(1) lookups without storing plaintext.
+# Creates a SHA-256 hash of the normalized email for O(1) lookups without storing plaintext.
 # This allows the application to perform efficient user lookups based on email without ever storing the plaintext email in the database, enhancing privacy and security. By using a deterministic hash function like SHA-256, we can ensure that the same email will always produce the same blind index, allowing for consistent lookups while keeping the actual email address protected. This approach is compliant with GDPR requirements for data minimization and pseudonymisation, as it prevents direct access to personally identifiable information while still enabling necessary functionality for user authentication and management.
 def get_email_index(email: str) -> str:
-    """SHA-256 provides a consistent key for lookups without revealing PII."""
     if not email: return None
     return hashlib.sha256(email.lower().strip().encode()).hexdigest()
 

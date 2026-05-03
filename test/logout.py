@@ -22,7 +22,7 @@ class LogoutHandlerTest(BaseTest):
         super().setUpClass()
 
     def test_logout(self):
-        """Full flow: Register, Login, then Logout"""
+        # This test verifies that a user can successfully log out using a valid token, and that the logout process properly invalidates the token in the database. The test first registers a new user, then logs in to obtain a valid session token. It then uses this token to call the logout endpoint, expecting a successful response with a 200 status code. This confirms that the logout functionality is working correctly and that the token is being invalidated as intended.
         email = 'logout_test@test.com'
         password = 'password123'
         
@@ -52,7 +52,7 @@ class LogoutHandlerTest(BaseTest):
 
     # This test verifies that once a token is used to logout, it cannot be used again, ensuring that the logout process effectively invalidates the token in the database. The first logout should succeed with a 200 status code, while the second attempt with the same token should fail with a 403 status code, confirming that the token has been cleared from the database and cannot be reused.
     def test_logout_twice(self):
-        """Verify a token can't be used twice"""
+        
         email = 'logout_twice@test.com'
         password = 'password123'
         

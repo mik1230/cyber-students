@@ -5,12 +5,13 @@ from ..security import decrypt_pii # Import the decryption function
 class AuthHandler(BaseHandler):
 
     async def prepare(self):
-        # We call super().prepare() to ensure that any JSON parsing or other setup in BaseHandler is executed before we handle authentication. This allows us to access self.request.arguments if needed for token extraction or other purposes.
+        
         super(AuthHandler, self).prepare()
-        # Handle CORS preflight requests (OPTIONS) without requiring authentication, as these are sent by browsers before actual requests and should not be blocked.
+     
         if self.request.method == 'OPTIONS':
             return
-        # Extract the token from the request headers (e.g., X-Token) and validate it against the database. This is a common approach for stateless authentication in APIs, where the client includes a token in the headers of each request to authenticate themselves. The prepare method is called before each request handler method (get, post, etc.), allowing us to centralise authentication logic and ensure that all requests are properly authenticated before processing.
+        
+       
         token_header = self.request.headers.get('X-Token')
         if not token_header:
             self.current_user = None
@@ -41,7 +42,7 @@ class AuthHandler(BaseHandler):
             self.send_error(403, message='Your token is invalid!')
             return
 
-        # Check if the token has expired by comparing the current time with the expiresIn timestamp stored in the database. This is an important security measure to ensure that old or stolen tokens cannot be used indefinitely, reducing the risk of unauthorized access if a token is compromised. By enforcing token expiration, we can limit the window of opportunity for attackers to use stolen tokens, enhancing the security of user sessions while still providing a reasonable duration for users to remain logged in without frequent re-authentication. If the token has expired, we treat it as invalid and respond with an appropriate error message, prompting the user to log in again to obtain a new token. This approach helps us maintain a secure and compliant authentication system while adhering to GDPR requirements for data protection and user privacy.
+        
         current_time = datetime.now(timezone.utc).timestamp()
         if current_time > user.get('expiresIn', 0):
             self.current_user = None
