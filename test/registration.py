@@ -15,7 +15,7 @@ class RegistrationHandlerTest(BaseTest):
     def setUpClass(self):
         self.my_app = Application([(r'/students/api/registration', RegistrationHandler)])
         super().setUpClass()
-
+    # I need to update the setUpClass method to include the new fields in the registration handler. This will ensure that the tests are properly set up to handle the new encryption scheme and GDPR compliance requirements.
     def test_registration(self):
         email = "mike@test.com"
         # New GDPR fields
@@ -38,12 +38,11 @@ class RegistrationHandlerTest(BaseTest):
         
         body_2 = json_decode(response.body)
 
-        # 1. Verify basic fields are encrypted
+        # Verify basic fields are encrypted
         self.assertNotEqual(email, body_2['email'])
         
-        # 2. Verify the new sensitive fields are NOT plaintext
-        # (Note: You'll need to check the DB or the response if your API returns them)
-        # If your API returns the encrypted values in the response:
+        # Verify the new sensitive fields are NOT plaintext
+        # We check that the fullName is not returned in plaintext, and that the email is still present (but encrypted) to confirm that the response structure is correct.
         self.assertIn('email', body_2)
         self.assertNotEqual(full_name, body_2.get('fullName'))
 
@@ -56,12 +55,11 @@ class RegistrationHandlerTest(BaseTest):
         }
 
         response = self.fetch('/students/api/registration', method='POST', body=dumps(body))
-        # We use 400 (Bad Request) for validation errors, not 422 (Unprocessable Entity). 422 is more specific and can be used when the request is well-formed but semantically incorrect. In this case, the request is missing required fields, so 400 is more appropriate.
+        # We use 400 (Bad Request) for validation errors, which is more appropriate than 200 since the request is not valid without a display name. The test should check for the presence of the error message in the response to confirm that the validation is working correctly.
         self.assertEqual(400, response.code)
         # self.assertEqual(200, response.code)
 
-        # I need to remove this test as it is no longer valid with the new encryption scheme. The test should be updated to check for the presence of the encrypted values instead of the plaintext values.
-        # body_2 = json_decode(response.body)
+        # I could remove this test as it is no longer valid with the new encryption scheme. The test should be updated to check for the presence of the encrypted values instead of the plaintext values.
         body_2 = json_decode(response.body)
         self.assertIn('error', body_2)
         

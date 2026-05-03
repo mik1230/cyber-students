@@ -13,7 +13,7 @@ class UserHandlerTest(BaseTest):
 
     @classmethod
     def setUpClass(cls):
-        # The test app needs all routes to perform the Setup-Act-Assert flow
+        #  Ensure the routes match exactly what is in my api/app.py
         cls.my_app = Application([
             (r'/students/api/registration', RegistrationHandler),
             (r'/students/api/login', LoginHandler),
@@ -26,34 +26,34 @@ class UserHandlerTest(BaseTest):
         email = 'test@test.com'
         password = 'testPassword'
         
-        # 1. SETUP: Register via API (creates encrypted/hashed data)
+        # Register via API (creates encrypted/hashed data)
         reg_body = {
             'email': email,
             'password': password,
             'displayName': 'Tester',
             'fullName': 'Michael Test',
-            'address': '123 Cyber Ave',
+            'address': '123 Carlow Lane',
             'dob': '1995-05-05',
-            'phone': '0891234567',
+            'phone': '0861234567',
             'disabilities': ['Visual Impairment']
         }
         self.fetch('/students/api/registration', method='POST', body=dumps(reg_body))
 
-        # 2. SETUP: Login to get a real session token
+        # SETUP: Login to get a real session token
         login_resp = self.fetch('/students/api/login', method='POST', body=dumps({
             'email': email, 'password': password
         }))
         token = json_decode(login_resp.body)['token']
 
-        # 3. ACT: Fetch the profile using the secure token
+        # Fetch the profile using the secure token
         headers = HTTPHeaders({'X-Token': token})
         response = self.fetch('/students/api/user', headers=headers)
         
-        # 4. ASSERT: The server should return DECRYPTED values
+        # The server should return DECRYPTED values
         self.assertEqual(200, response.code)
         body = json_decode(response.body)
         
-        # Check that the decryption engine is working correctly
+        # Check that the decryption is working correctly
         self.assertEqual(email, body['email'])
         self.assertEqual('Michael Test', body['fullName'])
         self.assertIn('Visual Impairment', str(body['disabilities']))

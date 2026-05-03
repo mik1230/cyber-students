@@ -13,7 +13,7 @@ class LogoutHandlerTest(BaseTest):
 
     @classmethod
     def setUpClass(cls):
-        # Ensure the routes match exactly what is in your api/app.py
+        # Ensure the routes match exactly what is in my api/app.py
         cls.my_app = Application([
             (r'/students/api/registration', RegistrationHandler),
             (r'/students/api/login', LoginHandler),
@@ -26,36 +26,37 @@ class LogoutHandlerTest(BaseTest):
         email = 'logout_test@test.com'
         password = 'password123'
         
-        # 1. Register the user
+        # Register the user
         reg_body = {'email': email, 'password': password, 'displayName': 'LogoutUser'}
         self.fetch('/students/api/registration', method='POST', body=dumps(reg_body))
 
-        # 2. Login to get the encrypted token
+        # Login to get the encrypted token
         login_resp = self.fetch('/students/api/login', method='POST', body=dumps({'email': email, 'password': password}))
         token = json_decode(login_resp.body)['token']
 
-        # 3. Logout using that token
+        # Logout using that token
         headers = HTTPHeaders({'X-Token': token})
         response = self.fetch('/students/api/logout', method='POST', headers=headers, body="")
         self.assertEqual(200, response.code)
 
     def test_logout_without_token(self):
-        # Should return 400 as per your AuthHandler logic
+        # Should return 400 as per my AuthHandler logic since no token is provided
         response = self.fetch('/students/api/logout', method='POST', body="")
         self.assertEqual(400, response.code)
 
     def test_logout_wrong_token(self):
-        # Should return 403 as per your AuthHandler logic
+        # Should return 403 as per my AuthHandler logic
         headers = HTTPHeaders({'X-Token': 'this_token_does_not_exist'})
         response = self.fetch('/students/api/logout', method='POST', headers=headers, body="")
         self.assertEqual(403, response.code)
 
+    # This test verifies that once a token is used to logout, it cannot be used again, ensuring that the logout process effectively invalidates the token in the database. The first logout should succeed with a 200 status code, while the second attempt with the same token should fail with a 403 status code, confirming that the token has been cleared from the database and cannot be reused.
     def test_logout_twice(self):
         """Verify a token can't be used twice"""
         email = 'logout_twice@test.com'
         password = 'password123'
         
-        # Setup: Register and Login
+        # Register and Login
         self.fetch('/students/api/registration', method='POST', body=dumps({'email': email, 'password': password, 'displayName': 'Twice'}))
         login_resp = self.fetch('/students/api/login', method='POST', body=dumps({'email': email, 'password': password}))
         token = json_decode(login_resp.body)['token']
