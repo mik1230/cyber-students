@@ -91,5 +91,4 @@ def email_index_filter(email: str) -> dict:
 # Token Generation: Creates a high-entropy random token for session management.
 # This function generates a secure random token using os.urandom, which provides cryptographically strong random bytes. The generated token is 32 bytes in length, which is sufficient for session management and provides a high level of entropy to prevent token guessing or brute-force attacks. The token is returned as a hexadecimal string, making it easy to store and transmit while ensuring that it remains secure and unique for each session. This approach helps to protect against session hijacking and ensures that user sessions are managed securely in compliance with best practices for authentication and session management.
 def generate_token() -> str:
-    """Generates a high-entropy 32-byte hex token."""
     return os.urandom(32).hex()

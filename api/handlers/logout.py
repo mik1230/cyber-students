@@ -18,8 +18,9 @@ class LogoutHandler(AuthHandler):
             {'$set': {'token': None, 'expiresIn': 0}}
         )
         
-        # Respond with a success message. In a real application, we might redirect the user or clear cookies as well, but this demonstrates the logout functionality clearly.
+        # Respond with a success message. In a real application, we might want to redirect the user and probably clear cookies as well, but this shows the logout functionality.
         self.set_status(200)
+
         # The response includes a success message to confirm that the logout operation was successful. In a production application, we might also want to clear any authentication cookies or tokens on the client side to ensure that the user is fully logged out from the client perspective as well, but this response serves to indicate that the server-side session has been effectively terminated in compliance with GDPR requirements for user control over their data and sessions.
         self.response.update({"message": "Logged out successfully"})
         self.write_json()

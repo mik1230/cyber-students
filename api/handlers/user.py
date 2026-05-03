@@ -14,17 +14,17 @@ class UserHandler(AuthHandler):
         
         self.set_status(200)
         
-        # 1. Decrypt the PII for the response
+        # Decrypt the PII for the response
         # We use .get() to prevent crashes if a field is missing, and decrypt_pii to ensure data is only decrypted when accessed.
         self.response['email'] = decrypt_pii(user['email'])
         self.response['displayName'] = decrypt_pii(user['displayName'])
         
-        # 2. Add the new GDPR fields (Decrypted)
+        # Add the new GDPR fields (Decrypted)
         # Use .get() to prevent crashes if a field is missing and decrypt_pii to ensure data is only decrypted when accessed.
         self.response['fullName'] = decrypt_pii(user.get('fullName', ''))
         self.response['address'] = decrypt_pii(user.get('address', ''))
         
-        # 3. Handle the disabilities list, which is stored as encrypted JSON. We need to decrypt it and then parse the JSON to return it as a list.
+        # Handle the disabilities list, which is stored as encrypted JSON. We need to decrypt it and then parse the JSON to return it as a list.
         try:
             decrypted_disabilities = decrypt_pii(user.get('disabilities', ''))
             self.response['disabilities'] = json.loads(decrypted_disabilities)
