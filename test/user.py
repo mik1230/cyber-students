@@ -59,6 +59,6 @@ class UserHandlerTest(BaseTest):
         self.assertIn('Visual Impairment', str(body['disabilities']))
 
     def test_user_unauthorized(self):
-        """Verify that missing or invalid tokens are rejected"""
+        # Verify that missing or invalid tokens are rejected when trying to access the user profile, ensuring that unauthorized access is properly handled and that sensitive information is protected from unauthenticated requests. This test checks for a 400 status code to confirm that the request was rejected due to missing or invalid authentication credentials.
         response = self.fetch('/students/api/user')
-        self.assertEqual(400, response.code) # Or 401, depending on your logic
+        self.assertEqual(400, response.code) 
